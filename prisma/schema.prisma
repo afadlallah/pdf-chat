@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+model Documents {
+  createdAt    DateTime      @default(now()) @map(name: "created_at")
+  id           String        @id @default(cuid())
+  userId       String
+  pdfSize      Int
+  pdfTitle     String
+  pdfUrl       String
+  chatMessages ChatMessage[]
+}
+
+model ChatMessage {
+  id         String    @id @default(cuid())
+  createdAt  DateTime  @default(now()) @map(name: "created_at")
+  documentId String
+  document   Documents @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  content    String
+  role       String
+  sources    Json?     @db.JsonB
+}

@@ -1,0 +1,13 @@
+# build artifacts
+__tmp__/
+_next/
+.next/
+.source/
+build/
+compiled/
+dist/
+node_modules/
+target/
+
+bun.lockb
+yarn.lock
