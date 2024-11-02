@@ -13,8 +13,10 @@ import { useChat } from 'ai/react'
 import ReactMarkdown from 'react-markdown'
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css'
 import 'react-pdf/dist/esm/Page/TextLayer.css'
+import { cn } from '@/lib/utils'
 import LoadingDots from '@/components/elements/loading-dots'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 
 export default function DocumentComponent({ currentDoc, userImage }: { currentDoc: Documents; userImage?: string }) {
   const toolbarPluginInstance = toolbarPlugin()
@@ -107,18 +109,36 @@ export default function DocumentComponent({ currentDoc, userImage }: { currentDo
     return source.metadata['loc.pageNumber'] ?? source.metadata.loc?.pageNumber
   }
 
+  const [showPdf, setShowPdf] = useState(false)
+
   return (
-    <div className='flex size-full'>
-      {/* Left Side - PDF Viewer */}
-      <div className='w-1/2 border-r'>
+    <div className='flex size-full flex-col overflow-hidden border-r lg:flex-row'>
+      <div className='flex items-center justify-center border-b py-2 lg:hidden'>
+        <div className='flex items-center gap-3'>
+          <span>Show PDF</span>
+          <Switch defaultChecked checked={showPdf} onCheckedChange={setShowPdf} />
+        </div>
+      </div>
+
+      <div className={cn('h-1/3 w-full overflow-hidden border-b lg:h-full lg:w-1/2 lg:border-b-0', !showPdf && 'hidden lg:block')}>
         <Worker workerUrl='https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js'>
-          <Toolbar>{renderDefaultToolbar(transform)}</Toolbar>
-          <Viewer fileUrl={pdfUrl} plugins={[toolbarPluginInstance, pageNavigationPluginInstance]} />
+          <div className='flex h-full flex-col'>
+            <div className='border-b'>
+              <Toolbar>{renderDefaultToolbar(transform)}</Toolbar>
+            </div>
+            <div className='flex-1 overflow-hidden'>
+              <Viewer fileUrl={pdfUrl} plugins={[toolbarPluginInstance, pageNavigationPluginInstance]} />
+            </div>
+          </div>
         </Worker>
       </div>
 
-      {/* Right Side - Chat */}
-      <div className='flex w-1/2 flex-col'>
+      <div
+        className={cn(
+          'flex w-full flex-col overflow-hidden lg:w-1/2 lg:border-l',
+          showPdf ? 'h-2/3 lg:h-full' : 'h-[calc(100%-10px)] lg:h-full'
+        )}
+      >
         <div ref={messageListRef} className='flex-1 overflow-y-auto p-4'>
           {messages.length === 0 && <div className='flex h-full items-center justify-center text-xl'>Start chatting below!</div>}
           {messages.map((message, index) => {
@@ -169,7 +189,7 @@ export default function DocumentComponent({ currentDoc, userImage }: { currentDo
             )
           })}
         </div>
-        <div className='border-t p-4'>
+        <div className='shrink-0 border-t p-4'>
           <form className='relative' onSubmit={handleSubmit}>
             <textarea
               ref={textAreaRef}

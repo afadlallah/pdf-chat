@@ -136,7 +136,7 @@ export default function DashboardComponent({ docsList }: { docsList: Document[] 
   }
 
   return (
-    <div className='container mx-auto mt-10 flex flex-col gap-4'>
+    <div className='container mx-auto mt-10 flex flex-col gap-4 pb-12 md:pb-0'>
       <HeadingWithTooltip text={docsList.length > 0 ? 'Continue your conversation...' : 'Upload your first PDF to get started!'} />
       {docsList.length > 0 && (
         <div className='mx-auto grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
@@ -168,7 +168,7 @@ export default function DashboardComponent({ docsList }: { docsList: Document[] 
         </div>
       )}
       {docsList.length > 0 ? <h1 className='text-center text-4xl font-medium tracking-tighter'>...or upload a new file</h1> : null}
-      <div className='mx-auto flex min-w-[450px] justify-center'>{loading ? <LoadingButton /> : <UploadDropZone />}</div>
+      <div className='mx-auto flex justify-center'>{loading ? <LoadingButton /> : <UploadDropZone />}</div>
     </div>
   )
 }

@@ -1,8 +1,6 @@
-'use client'
-
 import React from 'react'
 import Link from 'next/link'
-import { FileText, Github, Star } from 'lucide-react'
+import { FileText, Github } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export function Footer() {

@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import { cn } from '@/lib/utils'
-import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import '@/styles/globals.css'
 
@@ -36,8 +35,7 @@ export default function RootLayout({
       <html suppressHydrationWarning className={cn('h-full antialiased', inter.variable, jetbrainsMono.variable)} lang='en'>
         <body className='flex h-full flex-col font-sans antialiased'>
           <Header />
-          <div className='flex-1 overflow-hidden'>{children}</div>
-          <Footer />
+          <div className='flex-1 overflow-y-auto'>{children}</div>
         </body>
       </html>
     </ClerkProvider>
