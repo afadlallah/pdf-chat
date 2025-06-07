@@ -39,10 +39,10 @@ git clone https://github.com/afadlallah/pdf-chat.git
 bun install
 ```
 
-3. Create `.env.local` file and add the environment variables.
+3. Create `.env` file and add the environment variables.
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
 Check [Together AI's models page](https://api.together.ai/models) if you want to use a different chat model (default is `meta-llama/Llama-3.2-3B-Instruct-Turbo`).
