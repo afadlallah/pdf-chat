@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { ChatTogetherAI } from '@langchain/community/chat_models/togetherai'
 import type { Document } from '@langchain/core/documents'
 import { AIMessage, ChatMessage, HumanMessage } from '@langchain/core/messages'
+import { ChatOpenAI } from '@langchain/openai'
 import type { Message as VercelChatMessage } from 'ai'
 import { createStreamDataTransformer } from 'ai'
 import { loadEmbeddingsModel } from '@/lib/loadEmbeddings'
@@ -47,29 +47,64 @@ export async function POST(req: NextRequest) {
       throw new Error('Failed to save message to database.')
     }
 
-    const model = new ChatTogetherAI({
-      modelName: CHAT_MODEL,
-      temperature: 0
-    })
+    if (!process.env.TOGETHER_AI_API_KEY) {
+      throw new Error(
+        'TOGETHER_AI_API_KEY environment variable is not set. Please add your TogetherAI API key to your environment variables.'
+      )
+    }
 
-    const embeddings = loadEmbeddingsModel()
+    console.log('Initializing ChatOpenAI with model:', CHAT_MODEL)
+    console.log('TogetherAI API key configured:', process.env.TOGETHER_AI_API_KEY ? 'Yes' : 'No')
+
+    // Use TogetherAI through their OpenAI-compatible endpoint
+    const model = new ChatOpenAI({
+      modelName: CHAT_MODEL,
+      temperature: 0,
+      openAIApiKey: process.env.TOGETHER_AI_API_KEY,
+      configuration: {
+        baseURL: 'https://api.together.xyz/v1',
+        defaultHeaders: {}
+      }
+    } as any)
+
+    console.log('Model initialized:', model.constructor.name)
+
+    let embeddings
+    try {
+      embeddings = loadEmbeddingsModel()
+    } catch (error) {
+      console.error('Error loading embeddings model:', error)
+      throw new Error('Failed to load embeddings model. Please check your OpenAI API key configuration.')
+    }
 
     let resolveWithDocuments: (value: Document[]) => void
-    const documentPromise = new Promise<Document[]>((resolve) => {
+    let rejectWithError: (error: Error) => void
+    const documentPromise = new Promise<Document[]>((resolve, reject) => {
       resolveWithDocuments = resolve
+      rejectWithError = reject
     })
 
-    const retrieverInfo = await loadRetriever({
-      chatId,
-      embeddings,
-      callbacks: [
-        {
-          handleRetrieverEnd(documents) {
-            resolveWithDocuments(documents)
+    let retrieverInfo
+    try {
+      retrieverInfo = await loadRetriever({
+        chatId,
+        embeddings,
+        callbacks: [
+          {
+            handleRetrieverEnd(documents) {
+              resolveWithDocuments(documents || [])
+            },
+            handleRetrieverError(error) {
+              console.error('Retriever error:', error)
+              rejectWithError(error)
+            }
           }
-        }
-      ]
-    })
+        ]
+      })
+    } catch (error) {
+      console.error('Error loading retriever:', error)
+      throw new Error('Failed to load document retriever.')
+    }
 
     const retriever = retrieverInfo.retriever
 
@@ -80,7 +115,19 @@ export async function POST(req: NextRequest) {
       chat_history: formattedPreviousMessages
     })
 
-    const documents = await documentPromise
+    // Set a timeout for document promise to prevent hanging
+    const timeoutPromise = new Promise<Document[]>((_, reject) => {
+      setTimeout(() => reject(new Error('Document retrieval timeout')), 10000)
+    })
+
+    let documents: Document[]
+    try {
+      documents = await Promise.race([documentPromise, timeoutPromise])
+    } catch (error) {
+      console.error('Error retrieving documents:', error)
+      documents = [] // Fallback to empty array
+    }
+
     const sources = documents.map((doc) => ({
       pageContent: doc.pageContent.slice(0, 50) + '...',
       metadata: doc.metadata
