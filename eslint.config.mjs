@@ -18,6 +18,7 @@ const compat = new FlatCompat({
 })
 
 const config = [
+  { ignores: ['.next/**', 'node_modules/**', 'next-env.d.ts'] },
   // ...compat.extends('next/core-web-vitals', 'plugin:tailwindcss/recommended', 'prettier', 'plugin:prettier/recommended'),
   ...compat.extends('plugin:tailwindcss/recommended', 'prettier', 'plugin:prettier/recommended'),
   {
